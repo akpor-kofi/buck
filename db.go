@@ -1,12 +1,12 @@
 package buckis
 
-type db struct {
+type Db struct {
 	*dict
 
 	// maybe a place for indexes not sure yet
 }
 
-func DB() *db {
+func DB() *Db {
 	d := newDict()
 
 	go d.listenForCommands()
@@ -15,7 +15,7 @@ func DB() *db {
 
 	d.Load()
 
-	return &db{
+	return &Db{
 		d,
 	}
 }
