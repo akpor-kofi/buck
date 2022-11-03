@@ -1,10 +1,29 @@
 package buckis
 
-import "errors"
+import (
+	"errors"
+	"reflect"
+)
 
 var ErrHashNotFound = errors.New("hash not found")
 
-func (d *dict) HSet(key string, hashes ...string) error {
+// HSet func (d *dict) HSet(key string, hashes ...string) error {
+func (d *dict) HSet(key string, entity any) error {
+	var hashes []string
+
+	t := reflect.TypeOf(entity)
+	v := reflect.ValueOf(entity)
+
+	for i := 0; i < t.NumField(); i++ {
+		field := t.Field(i)
+
+		k := field.Tag.Get("buckis")
+		value := v.Field(i).String()
+		if k != "" {
+			hashes = append(hashes, k, value)
+		}
+	}
+
 	return d.hset(SAVE, key, hashes...)
 }
 

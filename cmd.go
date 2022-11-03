@@ -17,6 +17,13 @@ const (
 	DONT_SAVE
 )
 
+// TODO:
+// - a way to set a struct obj to hashes in hset
+// - write test for all data structures
+// - continue more implementation for full-text, graph, like auto-sugesstion, finc nearest neighbors
+// - look for means to support blockchain and list without the use of generics
+// - further lookup of blockchain
+
 const (
 	SET stateChangingCommand = iota
 	INCRBY
