@@ -34,9 +34,13 @@ func (d *dict) runCommand(cmd command) {
 	case RADD:
 		//
 	case RPUSH:
+		_, _ = d.rPush(DONT_SAVE, cmd.args[0].(string), cmd.args[1].(string))
 	case LPUSH:
+		_, _ = d.lPush(DONT_SAVE, cmd.args[0].(string), cmd.args[1].(string))
 	case LPOP:
+		_, _ = d.lPop(DONT_SAVE, cmd.args[0].(string))
 	case RPOP:
+		_, _ = d.rPop(DONT_SAVE, cmd.args[0].(string))
 	case FTCREATE:
 	case BCADD:
 
