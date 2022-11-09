@@ -59,10 +59,8 @@ func (d *dict) set(flag int, key string, value any) error {
 			d.waiter.Add(1)
 			go func(ch chan command) {
 				defer d.waiter.Done()
-				d.locker.Lock()
 				cmd := newCommand(SET, key, value)
 				ch <- *cmd
-				d.locker.Unlock()
 			}(d.commandChan)
 			d.waiter.Wait()
 		}

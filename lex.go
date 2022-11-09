@@ -63,7 +63,6 @@ func (lt *lexTree) findByLex(args ...string) (results []string) {
 		query := strings.TrimLeft(lb, "[")
 
 		startingIndex := sort.Search(lt.len(), func(i int) bool {
-			fmt.Println(arr[i])
 			return arr[i] > query
 		})
 

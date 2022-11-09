@@ -31,8 +31,8 @@ func (d *dict) runCommand(cmd command) {
 		_ = d.zincrby(DONT_SAVE, cmd.args[0].(string), cmd.args[1].(string), int(cmd.args[2].(float64)))
 	case ZREM:
 		_ = d.zrem(DONT_SAVE, cmd.args[0].(string), cmd.args[1].(string))
-	case RADD:
-		//
+	case GADD:
+		d.gAdd(DONT_SAVE, cmd.args[0].(string), cmd.args[1].(string), cmd.args[2].(string))
 	case RPUSH:
 		_, _ = d.rPush(DONT_SAVE, cmd.args[0].(string), cmd.args[1].(string))
 	case LPUSH:
@@ -42,7 +42,10 @@ func (d *dict) runCommand(cmd command) {
 	case RPOP:
 		_, _ = d.rPop(DONT_SAVE, cmd.args[0].(string))
 	case FTCREATE:
-	case BCADD:
+	case BFADD:
+		_ = d.bfAdd(DONT_SAVE, cmd.args[0].(string), cmd.args[1].(string))
+	case JSONSET:
+		_ = d.jsonSet(DONT_SAVE, cmd.args[0].(string), cmd.args[1].(string), cmd.args[2].(string))
 
 	}
 

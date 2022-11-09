@@ -85,7 +85,7 @@ func (d *dict) LRevRange(key string, opts ...int) (arr []string, err error) {
 	return
 }
 
-func (d *dict) LIndex(key, item string) (i int, err error) {
+func (d *dict) LPos(key, item string) (i int, err error) {
 	lde, err := d.listLookup(key)
 	if err != nil {
 		return
@@ -102,6 +102,15 @@ func (d *dict) LIndex(key, item string) (i int, err error) {
 	err = errors.New("item not found")
 
 	return
+}
+
+func (d *dict) LIndex(key string, index int) (string, error) {
+	lde, err := d.listLookup(key)
+	if err != nil {
+		return "", err
+	}
+
+	return lde.values.([]string)[index], nil
 }
 
 func (d *dict) listLookup(key string) (*dictEntry, error) {

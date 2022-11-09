@@ -14,6 +14,8 @@ const (
 	SortedSet
 	Search
 	List
+	Bloom
+	Json
 
 	// Graph
 )
@@ -25,12 +27,11 @@ type dictEntry struct {
 }
 
 type dict struct {
-	ht               [6][100]*dictEntry
+	ht               [9][100]*dictEntry
+	hexastore        []string
 	commandLoadQueue chan command
-	commandQueueQuit chan chan error
 	commandChan      chan command
 	waiter           *sync.WaitGroup
-	locker           *sync.Mutex
 	aof              *os.File
 }
 
@@ -43,12 +44,10 @@ func newDict() *dict {
 	}
 
 	return &dict{
-		ht:               [6][100]*dictEntry{},
+		ht:               [9][100]*dictEntry{},
 		commandLoadQueue: make(chan command, 10),
-		commandQueueQuit: make(chan chan error),
 		commandChan:      make(chan command),
 		waiter:           &sync.WaitGroup{},
-		locker:           &sync.Mutex{},
 		aof:              aof,
 	}
 }

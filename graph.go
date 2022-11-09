@@ -1,57 +1,66 @@
 package buckis
 
-import "strings"
+import (
+	"sort"
+	"strings"
+)
 
-// GraphCreate implement using the sorted sets following the hexastore principle
-const graphKey = "graph:relations"
+func (d *dict) gAdd(flag int, subject, predicate, object string) {
+	spo := "spo:" + subject + ":" + predicate + ":" + object
+	sop := "sop:" + subject + ":" + object + ":" + predicate
+	ops := "ops:" + object + ":" + predicate + ":" + subject
+	osp := "osp:" + object + ":" + subject + ":" + predicate
+	pso := "pso:" + predicate + ":" + subject + ":" + object
+	pos := "pos:" + predicate + ":" + object + ":" + subject
 
-// graph relationship
-type graphRel struct {
-	subject   string
-	predicate string
-	object    string
-	relations []string
-}
+	d.hexastore = append(d.hexastore, spo, sop, ops, osp, pso, pos)
 
-func newGraphRel(s, p, o string) *graphRel {
-	var relations []string
+	// sort the store
+	sort.Strings(d.hexastore)
 
-	spo := "spo:" + s + ":" + p + ":" + o
-	sop := "sop:" + s + ":" + o + ":" + p
-	ops := "ops:" + o + ":" + p + ":" + s
-	osp := "osp:" + o + ":" + s + ":" + p
-	pso := "pso:" + p + ":" + s + ":" + o
-	pos := "pos:" + p + ":" + o + ":" + s
-
-	relations = append(relations, spo, sop, ops, osp, pso, pos)
-
-	return &graphRel{
-		subject:   s,
-		predicate: p,
-		object:    o,
-		relations: relations,
+	if flag == SAVE {
+		d.waiter.Add(1)
+		go func(ch chan command) {
+			defer d.waiter.Done()
+			cmd := newCommand(GADD, subject, predicate, object)
+			ch <- *cmd
+		}(d.commandChan)
+		d.waiter.Wait()
 	}
 }
 
-func (d *dict) RAdd(s, p, o string) error {
-	gr := newGraphRel(s, p, o)
-
-	for _, r := range gr.relations {
-		d.ZAdd(graphKey, r, 0)
-	}
-
-	return nil
+func (d *dict) GAdd(subject, predicate, object string) {
+	d.gAdd(SAVE, subject, predicate, object)
 }
 
-func (d *dict) RMatch(s, p string) (result []string, err error) {
-	res, err := d.ZRangeByLex(graphKey, 0, "[spo:"+s+":"+p, "+")
-	if err != nil {
-		return result, err
+// how many nodes are connected to a predicate
+// do s p 0
+
+func (d *dict) GRel(subject, object string) (result []string, err error) {
+	// checking sop
+	triple := "sop:" + subject + ":" + object
+
+	index := sort.Search(len(d.hexastore), func(i int) bool {
+		return d.hexastore[i] > triple
+	})
+
+	for i := index; strings.HasPrefix(d.hexastore[i], triple); i++ {
+		result = append(result, strings.Split(d.hexastore[i], ":")[3])
 	}
 
-	for _, r := range res {
-		result = append(result, strings.Split(r, ":")[3])
+	return
+}
+
+func (d *dict) GMatch(subject, predicate string) (result []string, err error) {
+	triple := "spo:" + subject + ":" + predicate
+
+	index := sort.Search(len(d.hexastore), func(i int) bool {
+		return d.hexastore[i] > triple
+	})
+
+	for i := index; strings.HasPrefix(d.hexastore[i], triple); i++ {
+		result = append(result, strings.Split(d.hexastore[i], ":")[3])
 	}
 
-	return result, nil
+	return
 }

@@ -40,14 +40,16 @@ const (
 	ZINCRBY
 	ZREM
 
-	RADD
+	GADD
 
 	RPUSH
 	LPUSH
 	LPOP
 	RPOP
 
-	BCADD
+	BFADD
+
+	JSONSET
 
 	FTCREATE
 )
@@ -108,8 +110,6 @@ func (d *dict) Load() {
 
 		cmd.args = args
 
-		fmt.Println(cmd)
-
 		d.commandLoadQueue <- cmd
 	}
 }
@@ -169,14 +169,14 @@ func (d *dict) listenForCommands() {
 			log.Fatal(err)
 		}
 
-		d.aof.WriteAt(commandBytes, stat.Size())
+		_, _ = d.aof.WriteAt(commandBytes, stat.Size())
 
 		stat, err = d.aof.Stat()
 		if err != nil {
 			log.Fatal(err)
 		}
 
-		fmt.Println(stat.Size())
+		//fmt.Println(stat.Size())
 	}
 }
 

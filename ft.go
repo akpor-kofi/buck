@@ -2,7 +2,6 @@ package buckis
 
 import (
 	"errors"
-	"fmt"
 	"github.com/google/btree"
 	"github.com/samber/lo"
 	"regexp"
@@ -10,12 +9,36 @@ import (
 )
 
 var ErrIndexNotFound = errors.New("index not found")
-var ErrWordNotFound = errors.New("word not found")
+
+type Filter struct {
+	NumField string
+	Min      int
+	Max      int
+}
+
+type IndexOptions struct {
+	Prefix    string
+	StopWords []string
+	NoFreqs   bool
+	Schema    []string
+}
+
+type SearchOptions struct {
+	NoContent bool
+	Filter    Filter // on numeric
+	Limit     []int
+	On        int
+}
 
 type invertedIndexEntry struct {
 	term          string
 	frequency     int
-	documentsList []string // keys
+	documentsList []doc // keys
+}
+
+type doc struct {
+	id    string
+	attrs string
 }
 
 func (iie *invertedIndexEntry) Less(than btree.Item) bool {
@@ -36,41 +59,34 @@ func lessFunc(a, b *invertedIndexEntry) bool {
 	}
 }
 
-func (d *dict) FTCreate(indexKey, collectionsKey string, schema ...string) error {
+func (d *dict) FTCreate(indexKey string, opts IndexOptions) error {
 	i := d.hash(indexKey)
 
-	invertedIndex := d.ht[Search][i]
-
-	de := &dictEntry{
-		key:    indexKey,
-		values: btree.NewG(2, lessFunc),
-	}
-
-	if invertedIndex == nil {
-		de.next = nil
-	} else {
-		de.next = invertedIndex
-	}
-
-	// TODO: overload the DE.VALUES with indexes
+	idxTree := btree.NewG(2, lessFunc)
 
 	for _, v := range d.ht[Hashes] {
 		if v == nil {
 			continue
 		}
 
+		// if v.key
+
 		currentNode := v
+
 		for {
+			if !strings.HasPrefix(currentNode.key, opts.Prefix) {
+				currentNode = currentNode.next
+			}
 
 			hash := currentNode.values.(map[string]any)
 
-			lo.ForEach(schema, func(item string, index int) {
-				if sentence, ok := hash[item]; ok {
+			lo.ForEach(opts.Schema, func(attr string, index int) {
+				if sentence, ok := hash[attr]; ok {
 
 					//process the strings
 					wordlist := tokenize(sentence.(string))
 
-					de.values = d.populateIndexTable(de.values.(*btree.BTreeG[*invertedIndexEntry]), wordlist, v.key)
+					idxTree = d.populateIndexTable(idxTree, wordlist, v.key, attr)
 				}
 			})
 
@@ -81,6 +97,12 @@ func (d *dict) FTCreate(indexKey, collectionsKey string, schema ...string) error
 			currentNode = currentNode.next
 
 		}
+	}
+
+	de := &dictEntry{
+		key:    indexKey,
+		values: idxTree,
+		next:   d.ht[Search][i],
 	}
 
 	d.ht[Search][i] = de
@@ -106,24 +128,6 @@ func (d *dict) FTSearch(indexKey, query string) (result []string, err error) {
 
 		return true
 	})
-
-	return
-}
-
-func (d *dict) FTFind(indexKey, word string) (result []string, err error) {
-	// index dict entry
-	ide, err := d.indexKeyLookup(indexKey)
-	if err != nil {
-		return
-	}
-
-	tree := ide.values.(*btree.BTreeG[*invertedIndexEntry])
-
-	if item, ok := tree.Get(&invertedIndexEntry{term: word}); !ok {
-		err = fmt.Errorf("word not found")
-	} else {
-		result = item.documentsList
-	}
 
 	return
 }
@@ -163,24 +167,22 @@ func (d *dict) indexKeyLookup(key string) (*dictEntry, error) {
 	}
 }
 
-func (d *dict) populateIndexTable(indexTree *btree.BTreeG[*invertedIndexEntry], wordList []string, hashKey string) *btree.BTreeG[*invertedIndexEntry] {
+func (d *dict) populateIndexTable(indexTree *btree.BTreeG[*invertedIndexEntry], wordList []string, hashKey string, attr string) *btree.BTreeG[*invertedIndexEntry] {
 	for _, word := range wordList {
+
+		document := doc{hashKey, attr}
 
 		entry := &invertedIndexEntry{
 			term:          word,
 			frequency:     1,
-			documentsList: []string{hashKey},
+			documentsList: []doc{document},
 		}
 
 		// try and check if it is already in the list
 		if item, ok := indexTree.Get(&invertedIndexEntry{term: word}); !ok {
 			indexTree.ReplaceOrInsert(entry)
 		} else {
-			if _, found := lo.Find(item.documentsList, func(document string) bool {
-				return document == hashKey
-			}); !found {
-				item.documentsList = append(item.documentsList, hashKey)
-			}
+			item.documentsList = append(item.documentsList, doc{hashKey, attr})
 
 			item.frequency = item.frequency + 1
 
