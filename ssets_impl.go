@@ -1,7 +1,5 @@
 package buckis
 
-import "fmt"
-
 func (d *dict) zadd(flag int, key string, member string, score int) error {
 	z := NewZ(member, score)
 	ssde, err := d.sortedSetLookup(key)
@@ -114,7 +112,6 @@ func (d *dict) zrem(flag int, key string, member string) error {
 	ssde, err := d.sortedSetLookup(key)
 
 	if err == ErrSortedSetNotFound {
-		fmt.Println("zrem")
 		return err
 	}
 
@@ -125,7 +122,6 @@ func (d *dict) zrem(flag int, key string, member string) error {
 
 	// delete member from skiplist
 	if zd.zht[d.zhash(member)] == nil {
-		fmt.Println("delete")
 		return ErrEntryNotFound
 	}
 
@@ -154,7 +150,6 @@ func (d *dict) zrem(flag int, key string, member string) error {
 	var tempPrevNode *ZEntry
 
 	if currentNode == nil {
-		fmt.Println("skiplist")
 		return ErrHashNotFound
 	}
 
@@ -171,7 +166,6 @@ func (d *dict) zrem(flag int, key string, member string) error {
 		}
 
 		if currentNode.next == nil {
-			fmt.Println("www")
 			return ErrHashNotFound
 		}
 

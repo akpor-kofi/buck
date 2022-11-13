@@ -1,7 +1,5 @@
 package buckis
 
-import "fmt"
-
 func (d *dict) incrBy(flag int, key string, incr int) (int, error) {
 	de, err := d.stringsLookup(key)
 
@@ -15,15 +13,13 @@ func (d *dict) incrBy(flag int, key string, incr int) (int, error) {
 		val += incr
 		de.values = val
 
-		fmt.Println(de.values)
-
 		// send command
 		if flag == SAVE {
 			d.waiter.Add(1)
 			go func(ch chan command) {
+				defer d.waiter.Done()
 				cmd := newCommand(INCRBY, key, incr)
 				ch <- *cmd
-				d.waiter.Add(1)
 			}(d.commandChan)
 			d.waiter.Wait()
 		}

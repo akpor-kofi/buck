@@ -10,22 +10,29 @@ import (
 // get
 //
 
-func (d *dict) jsonSet(flag int, key, path, value string) error {
+func (d *dict) jsonSet(flag int, key, path string, value any) (err error) {
 	jde, err := d.jsonLookup(key)
 	i := d.hash(key)
 
 	if err != nil {
-		// create the json, thinking of storing it as map[string]any type
-		var o map[string]any
-		err := json.Unmarshal([]byte(value), &o)
-		if err != nil {
-			return err
+		de := &dictEntry{
+			key:  key,
+			next: d.ht[Json][i],
 		}
 
-		de := &dictEntry{
-			key:    key,
-			values: o,
-			next:   d.ht[Json][i],
+		switch value.(type) {
+		case map[string]any:
+			de.values = value
+		case string:
+			// try to unmarshal object string
+			s := value.(string)
+			var o map[string]any
+			err = json.Unmarshal([]byte(s), &o)
+			if err != nil {
+				return
+			}
+			fmt.Println(o)
+			de.values = o
 		}
 
 		d.ht[Json][i] = de
@@ -40,12 +47,27 @@ func (d *dict) jsonSet(flag int, key, path, value string) error {
 			d.waiter.Wait()
 		}
 
-		return nil
+		return
 	}
 
-	jsonObj := jde.values.(map[string]any)
+	if path == "." {
+		var o map[string]any
+		switch value.(type) {
+		case string:
+			s := value.(string)
+			err = json.Unmarshal([]byte(s), &o)
+			if err != nil {
+				return
+			}
+			jde.values = o
+			return
+		}
 
-	jsonSetInPath(jsonObj, nil, path, value)
+	} else {
+		jsonObj := jde.values.(map[string]any)
+
+		jsonSetInPath(jsonObj, path, value)
+	}
 
 	if flag == SAVE {
 		d.waiter.Add(1)
@@ -60,26 +82,160 @@ func (d *dict) jsonSet(flag int, key, path, value string) error {
 	return nil
 }
 
-func (d *dict) JSONSet(key string, path string, value string) error {
+func (d *dict) JSONSet(key string, path string, value any) error {
 	return d.jsonSet(SAVE, key, path, value)
 }
 
-func (d *dict) JSONGet(key string, path string) (any, error) {
+type jsonMap struct {
+	isRoot  bool
+	pathKey string
+	value   any
+	err     error
+}
+
+func (s *jsonMap) Scan(o any) error {
+	if s.err != nil {
+		panic(s.err)
+	}
+
+	// handle root get
+	if s.isRoot {
+		// is definitely type map[string]interface{} so i need to marshall and unmarshal
+		mapBytes, err := json.Marshal(s.value)
+		if err != nil {
+			panic(err)
+		}
+
+		err = json.Unmarshal(mapBytes, o)
+		if err != nil {
+			panic(err)
+		}
+
+		fmt.Println(string(mapBytes))
+
+		return nil
+	}
+
+	mapBytes, err := json.Marshal(s.value)
+	if err != nil {
+		panic(err)
+	}
+
+	err = json.Unmarshal(mapBytes, o)
+	if err != nil {
+		panic(err)
+	}
+
+	return nil
+}
+
+func (d *dict) JSONGet(key string, path string) *jsonMap {
 	jde, err := d.jsonLookup(key)
 	if err != nil {
-		return "", err
+		return &jsonMap{err: err}
 	}
+
+	a := &jsonMap{}
 
 	value := jsonGetFromPath(jde.values.(map[string]any), path)
 
-	fmt.Println(value, "here")
-
-	b, err := json.MarshalIndent(value, "", "\t")
-	if err != nil {
-		return nil, err
+	if value == nil {
+		a.err = fmt.Errorf("no path found")
 	}
 
-	return string(b), err
+	if path == "." {
+		a.isRoot = true
+		a.value = value
+		return a
+	}
+
+	paths := strings.Split(path, ".")
+	a.pathKey = paths[len(paths)-1]
+	a.value = value
+
+	return a
+}
+
+func (d *dict) JSONNumIncrBy(key string, path string, incr int) (err error) {
+
+	jde, err := d.jsonLookup(key)
+
+	if err != nil {
+		return
+	}
+
+	jsonObj := jde.values.(map[string]any)
+
+	pathValue := jsonGetFromPath(jsonObj, path)
+
+	fmt.Println(pathValue)
+
+	switch pathValue.(type) {
+	case int:
+		b := pathValue.(int)
+		b += incr
+		jsonSetInPath(jsonObj, path, b)
+	case float64:
+		b := pathValue.(float64)
+		b += float64(incr)
+		jsonSetInPath(jsonObj, path, b)
+	case nil:
+		err = fmt.Errorf("no path found")
+	default:
+		err = fmt.Errorf("not a number")
+	}
+
+	return
+}
+
+func (d *dict) JSONToggle(key string, path string) (err error) {
+	jde, err := d.jsonLookup(key)
+
+	if err != nil {
+		return
+	}
+
+	jsonObj := jde.values.(map[string]any)
+
+	pathValue := jsonGetFromPath(jsonObj, path)
+
+	switch pathValue.(type) {
+	case bool:
+		jsonSetInPath(jsonObj, path, !pathValue.(bool))
+	case nil:
+		err = fmt.Errorf("no path found")
+	default:
+		err = fmt.Errorf("not a boolean")
+	}
+
+	return
+}
+
+// JSONDel delete a key recursively
+func (d *dict) JSONDel(key string, path string) (err error) {
+	return
+}
+
+// JSONArrAppend currently only support strings and numbers and not structs
+func (d *dict) JSONArrAppend(key, path string, element ...string) (err error) {
+	jde, err := d.jsonLookup(key)
+
+	if err != nil {
+		return
+	}
+
+	jsonObj := jde.values.(map[string]any)
+
+	pathValue := jsonGetFromPath(jsonObj, path)
+
+	switch pathValue.(type) {
+	case []string:
+		arr := pathValue.([]string)
+		arr = append(arr, element...)
+		jsonSetInPath(jsonObj, path, arr)
+	}
+
+	return
 }
 
 func (d *dict) jsonLookup(key string) (*dictEntry, error) {
@@ -104,43 +260,39 @@ func (d *dict) jsonLookup(key string) (*dictEntry, error) {
 	}
 }
 
-func jsonSetInPath(jsonObj, parentObj map[string]any, path, value string) {
+func jsonSetInPath(jsonObj map[string]any, path string, value any) {
 	paths := strings.Split(path, ".")
-	fmt.Println(paths)
 
 	if len(paths) <= 1 || path == "." {
-		// do the setting here
-		var pathJsonValue map[string]any
-
-		err := json.Unmarshal([]byte(value), &pathJsonValue)
-		if err != nil {
-			// if value possible scenario is it's just a value
-			fmt.Println("kkk")
-			parentObj[paths[0]] = value
-			return
-		}
-
-		for k, v := range pathJsonValue {
-			jsonObj[k] = v
-		}
+		jsonObj[paths[0]] = value
 
 		return
 	}
 
-	childPath := paths[1]
+	childPathPosition := 1
+	childNextChild := childPathPosition + 1
+	childPath := paths[childPathPosition]
 
-	if objVal, ok := jsonObj[childPath]; !ok {
+	if childObj, ok := jsonObj[childPath]; !ok {
 		// no value was found so create an object
 		jsonObj[childPath] = map[string]any{}
+
+		// NOTE: a way to know if the child path is the last path
+		if len(paths) <= childNextChild {
+			jsonObj[childPath] = value
+		} else {
+			jsonSetInPath(jsonObj[childPath].(map[string]any), strings.Join(paths[1:], "."), value)
+		}
+
 	} else {
-		switch objVal.(type) {
+		switch childObj.(type) {
 		case map[string]any:
+			jsonSetInPath(jsonObj[childPath].(map[string]any), strings.Join(paths[1:], "."), value)
 		default:
-			jsonObj[childPath] = map[string]any{}
+			jsonObj[childPath] = value
 		}
 	}
 
-	jsonSetInPath(jsonObj[childPath].(map[string]any), jsonObj, strings.Join(paths[1:], "."), value)
 }
 
 func jsonGetFromPath(jsonObj map[string]any, path string) any {
@@ -153,16 +305,16 @@ func jsonGetFromPath(jsonObj map[string]any, path string) any {
 	currentObj := jsonObj
 
 	for i := 1; i < len(paths); i++ {
-		value := jsonObj[paths[i]]
+		value := currentObj[paths[i]]
 
 		switch value.(type) {
 		case map[string]any:
-			currentObj = value.(map[string]any)
 
 			if i == len(paths)-1 {
-				return currentObj
+				return value
 			}
 
+			currentObj = value.(map[string]any)
 			continue
 		default:
 			return value

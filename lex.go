@@ -2,7 +2,6 @@ package buckis
 
 import (
 	"errors"
-	"fmt"
 	"sort"
 	"strings"
 )
@@ -56,8 +55,6 @@ func (lt *lexTree) findByLex(args ...string) (results []string) {
 	ub := args[1] //upper bound
 
 	arr := *lt
-
-	fmt.Println(arr)
 
 	if strings.HasPrefix(lb, "[") {
 		query := strings.TrimLeft(lb, "[")

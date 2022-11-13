@@ -8,15 +8,15 @@ func (d *dict) runCommand(cmd command) {
 	case INCRBY:
 		_, _ = d.incrBy(DONT_SAVE, cmd.args[0].(string), int(int64(cmd.args[1].(float64))))
 	case HSET:
-		var hashes []string
+		var hashes []any
 
 		for _, h := range cmd.args[1].([]any) {
-			hashes = append(hashes, h.(string))
+			hashes = append(hashes, h)
 		}
 
 		_ = d.hset(DONT_SAVE, cmd.args[0].(string), hashes...)
 	case HINCRBY:
-		//d.hIncrBy(cmd.args[0].(string), cmd.args[1].(string), cmd.args[2].(int))
+		//d.hIncrBy(examples.args[0].(string), examples.args[1].(string), examples.args[2].(int))
 	case SADD:
 		_ = d.sadd(DONT_SAVE, cmd.args[0].(string), cmd.args[1].(string))
 	case SREM:
@@ -45,7 +45,7 @@ func (d *dict) runCommand(cmd command) {
 	case BFADD:
 		_ = d.bfAdd(DONT_SAVE, cmd.args[0].(string), cmd.args[1].(string))
 	case JSONSET:
-		_ = d.jsonSet(DONT_SAVE, cmd.args[0].(string), cmd.args[1].(string), cmd.args[2].(string))
+		_ = d.jsonSet(DONT_SAVE, cmd.args[0].(string), cmd.args[1].(string), cmd.args[2])
 
 	}
 

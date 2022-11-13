@@ -3,9 +3,7 @@ package buckis
 import (
 	"encoding/binary"
 	"encoding/json"
-	"fmt"
 	"log"
-	"os"
 )
 
 const commandSize = 512
@@ -125,7 +123,6 @@ func (d *dict) backgroundLoad() {
 
 func (d *dict) listenForCommands() {
 	for cmd := range d.commandChan {
-		//	fmt.Println(cmd, "commands")
 
 		// to persist on disk we would need
 		// 1) number of arguments
@@ -175,20 +172,5 @@ func (d *dict) listenForCommands() {
 		if err != nil {
 			log.Fatal(err)
 		}
-
-		//fmt.Println(stat.Size())
 	}
-}
-
-func (d *dict) Save() {
-	pwd, _ := os.Getwd()
-
-	args := os.Args
-
-	fmt.Println(pwd, args)
-
-	pid := os.Getpid()
-	ppid := os.Getppid()
-	log.Printf("pid: %d, ppid: %d, args: %s", pid, ppid, os.Args)
-
 }

@@ -70,6 +70,5 @@ func bloomHashFunc(value string, k int) uint64 {
 	buf := bytes.NewBuffer(bits)
 	result, _ := binary.ReadUvarint(buf)
 
-	//fmt.Println(result)
 	return result % 100
 }

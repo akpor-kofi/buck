@@ -1,15 +1,39 @@
 package buckis
 
 import (
+	"encoding/json"
 	"errors"
+	"fmt"
 	"reflect"
 )
+
+type structable struct {
+	err    error
+	hashes map[string]any
+}
+
+func (s *structable) Scan(o any) {
+	if s.err != nil {
+		panic(s.err)
+	}
+
+	mapBytes, err := json.Marshal(s.hashes)
+	if err != nil {
+		panic(err)
+	}
+
+	err = json.Unmarshal(mapBytes, o)
+	if err != nil {
+		panic(err)
+	}
+
+}
 
 var ErrHashNotFound = errors.New("hash not found")
 
 // HSet func (d *dict) HSet(key string, hashes ...string) error {
 func (d *dict) HSet(key string, entity any) error {
-	var hashes []string
+	var hashes []any
 
 	t := reflect.TypeOf(entity)
 	v := reflect.ValueOf(entity)
@@ -18,23 +42,44 @@ func (d *dict) HSet(key string, entity any) error {
 		field := t.Field(i)
 
 		k := field.Tag.Get("buckis")
-		value := v.Field(i).String()
-		if k != "" {
-			hashes = append(hashes, k, value)
+
+		if k == "" {
+			continue
+		}
+
+		value := v.Field(i)
+
+		switch v.Field(i).Kind() {
+		case reflect.String:
+			hashes = append(hashes, k, value.String())
+		case reflect.Bool:
+			hashes = append(hashes, k, value.Bool())
+		case reflect.Int:
+			hashes = append(hashes, k, value.Int())
+		case reflect.Float32, reflect.Float64:
+			hashes = append(hashes, k, value.Float())
+		default:
+			return fmt.Errorf("value type not supported: %s", k)
 		}
 	}
 
 	return d.hset(SAVE, key, hashes...)
 }
 
-func (d *dict) HGetAll(key string) (map[string]any, error) {
+func (d *dict) HGetAll(key string) *structable {
 	de, err := d.hashesLookup(key)
 
 	if err != nil {
-		return nil, err
+		return &structable{
+			err: err,
+		}
 	}
 
-	return de.values.(map[string]any), nil
+	hashesStruct := &structable{
+		hashes: de.values.(map[string]any),
+	}
+
+	return hashesStruct
 }
 
 func (d *dict) hashesLookup(key string) (*dictEntry, error) {
@@ -70,6 +115,24 @@ func (d *dict) HGet(key, hashKey string) (any, error) {
 
 // HIncrBy TODO: implement this
 func (d *dict) HIncrBy(key, hashKey string, incr int) (int, error) {
+	de, err := d.hashesLookup(key)
+	if err != nil {
+		return 0, nil
+	}
 
-	return 0, nil
+	value, ok := de.values.(map[string]any)[hashKey]
+
+	if !ok {
+		return 0, fmt.Errorf("attribute does not exists")
+	}
+
+	switch value.(type) {
+	case int, int64:
+		a := int(value.(int64))
+		a += incr
+		de.values.(map[string]any)[hashKey] = a
+		return a, nil
+	}
+
+	return 0, fmt.Errorf("not an integer")
 }

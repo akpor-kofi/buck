@@ -1,6 +1,6 @@
 package buckis
 
-func (d *dict) hset(flag int, key string, hashes ...string) error {
+func (d *dict) hset(flag int, key string, hashes ...any) error {
 	i := d.hash(key)
 
 	// need to lookup and check already existing hash
@@ -8,7 +8,7 @@ func (d *dict) hset(flag int, key string, hashes ...string) error {
 
 	for k, j := 0, 1; k < len(hashes); k += 2 {
 
-		hashMap[hashes[k]] = hashes[j]
+		hashMap[hashes[k].(string)] = hashes[j]
 
 		j += 2
 	}

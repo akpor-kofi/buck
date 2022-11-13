@@ -1,12 +1,10 @@
 event streaming / history moments
-blockchain -- do hashgraph impl another project ||
-graph hexastore ||
 full-text search |
 process snapshotting
 time series
-bloom filters ||
-querying /json
 hyperloglog
+support realtime watch by watch each records for changes
+youtube aggregation algo - add features to the list data type that allows for aggregation
 
 
 // know how to better put commands in file rather than just assigning 512 bytes
