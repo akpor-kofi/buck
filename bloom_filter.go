@@ -21,7 +21,7 @@ func (d *dict) BFExists(key, value string) (bool, error) {
 		return false, ErrSetNotFound
 	}
 
-	bitArray := bfde.values.([100]bool)
+	bitArray := bfde.Values.([100]bool)
 
 	for k := 1; k <= numberOfHashFuncs; k++ {
 		if bitArray[bloomHashFunc(value, k)] {
@@ -35,25 +35,25 @@ func (d *dict) BFExists(key, value string) (bool, error) {
 	return false, nil
 }
 
-func (d *dict) bloomFilterLookup(key string) (*dictEntry, error) {
+func (d *dict) bloomFilterLookup(key string) (*DictEntry, error) {
 	i := d.hash(key)
 
-	currentEntry := d.ht[Bloom][i]
+	currentEntry := d.Ht[Bloom][i]
 
 	if currentEntry == nil {
-		return &dictEntry{}, ErrSetNotFound
+		return &DictEntry{}, ErrSetNotFound
 	}
 
 	for {
-		if currentEntry.key == key {
+		if currentEntry.Key == key {
 			return currentEntry, nil
 		}
 
-		if currentEntry.next == nil {
-			return &dictEntry{}, ErrSetNotFound
+		if currentEntry.Next == nil {
+			return &DictEntry{}, ErrSetNotFound
 		}
 
-		currentEntry = currentEntry.next
+		currentEntry = currentEntry.Next
 	}
 }
 

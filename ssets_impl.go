@@ -21,13 +21,13 @@ func (d *dict) zadd(flag int, key string, member string, score int) error {
 		tree := lexTree{}
 		zd.skiplist.Set(z.score, tree.Add(z.member))
 
-		de := &dictEntry{
-			key:    key,
-			values: zd,
+		de := &DictEntry{
+			Key:    key,
+			Values: zd,
 		}
 
 		// store the entry
-		d.ht[SortedSet][d.hash(key)] = de
+		d.Ht[SortedSet][d.hash(key)] = de
 
 		if flag == SAVE {
 			d.waiter.Add(1)
@@ -42,7 +42,7 @@ func (d *dict) zadd(flag int, key string, member string, score int) error {
 		return nil
 	}
 
-	zd := ssde.values.(*zdict)
+	zd := ssde.Values.(*zdict)
 
 	i := d.zhash(z.member)
 
@@ -115,7 +115,7 @@ func (d *dict) zrem(flag int, key string, member string) error {
 		return err
 	}
 
-	zd := ssde.values.(*zdict)
+	zd := ssde.Values.(*zdict)
 
 	// delete member from hashtable
 	i := d.zhash(member)

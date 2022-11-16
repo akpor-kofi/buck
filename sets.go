@@ -21,7 +21,7 @@ func (d *dict) SIsMember(key, value string) (bool, error) {
 		return false, err
 	}
 
-	if _, exists := de.values.(map[string]void)[value]; !exists {
+	if _, exists := de.Values.(map[string]void)[value]; !exists {
 		return false, nil
 	}
 
@@ -40,7 +40,7 @@ func (d *dict) SMembers(key string) ([]string, error) {
 
 	var members []string
 
-	for v, _ := range de.values.(map[string]void) {
+	for v, _ := range de.Values.(map[string]void) {
 		members = append(members, v)
 	}
 
@@ -53,7 +53,7 @@ func (d *dict) SCard(key string) int {
 		return 0
 	}
 
-	return len(de.values.(map[string]void))
+	return len(de.Values.(map[string]void))
 }
 
 func (d *dict) SRandMember(key string) string {
@@ -63,10 +63,10 @@ func (d *dict) SRandMember(key string) string {
 	}
 
 	rand.Seed(time.Now().UnixMilli())
-	random := rand.Intn(len(de.values.(map[string]void))) + 1
+	random := rand.Intn(len(de.Values.(map[string]void))) + 1
 	i := 0
 
-	for v, _ := range de.values.(map[string]void) {
+	for v, _ := range de.Values.(map[string]void) {
 		i++
 		if i == random {
 			return v
@@ -90,9 +90,9 @@ func (d *dict) SUnion(s1, s2 string) ([]string, error) {
 		return nil, err
 	}
 
-	unionMap := firstSet.values.(map[string]void)
+	unionMap := firstSet.Values.(map[string]void)
 
-	for v, _ := range secondSet.values.(map[string]void) {
+	for v, _ := range secondSet.Values.(map[string]void) {
 		unionMap[v] = void{}
 	}
 
@@ -116,8 +116,8 @@ func (d *dict) SInter(s1, s2 string) ([]string, error) {
 
 	var inter []string
 
-	for v, _ := range firstSet.values.(map[string]void) {
-		if _, exists := secondSet.values.(map[string]void)[v]; exists {
+	for v, _ := range firstSet.Values.(map[string]void) {
+		if _, exists := secondSet.Values.(map[string]void)[v]; exists {
 			inter = append(inter, v)
 		}
 	}
@@ -136,15 +136,15 @@ func (d *dict) SDiff(s1, s2 string) ([]string, error) {
 
 	var diff []string
 
-	for v, _ := range firstSet.values.(map[string]void) {
-		if _, exists := secondSet.values.(map[string]void)[v]; !exists {
+	for v, _ := range firstSet.Values.(map[string]void) {
+		if _, exists := secondSet.Values.(map[string]void)[v]; !exists {
 			diff = append(diff, v)
 		}
 	}
 
 	// naive implementation
-	for v, _ := range secondSet.values.(map[string]void) {
-		if _, exists := firstSet.values.(map[string]void)[v]; !exists {
+	for v, _ := range secondSet.Values.(map[string]void) {
+		if _, exists := firstSet.Values.(map[string]void)[v]; !exists {
 			diff = append(diff, v)
 		}
 	}
@@ -152,24 +152,24 @@ func (d *dict) SDiff(s1, s2 string) ([]string, error) {
 	return diff, nil
 }
 
-func (d *dict) setLookup(key string) (*dictEntry, error) {
+func (d *dict) setLookup(key string) (*DictEntry, error) {
 	i := d.hash(key)
 
-	currentEntry := d.ht[Set][i]
+	currentEntry := d.Ht[Set][i]
 
 	if currentEntry == nil {
-		return &dictEntry{}, ErrSetNotFound
+		return &DictEntry{}, ErrSetNotFound
 	}
 
 	for {
-		if currentEntry.key == key {
+		if currentEntry.Key == key {
 			return currentEntry, nil
 		}
 
-		if currentEntry.next == nil {
-			return &dictEntry{}, ErrSetNotFound
+		if currentEntry.Next == nil {
+			return &DictEntry{}, ErrSetNotFound
 		}
 
-		currentEntry = currentEntry.next
+		currentEntry = currentEntry.Next
 	}
 }

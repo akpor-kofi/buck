@@ -7,11 +7,11 @@ func (d *dict) incrBy(flag int, key string, incr int) (int, error) {
 		return 0, err
 	}
 
-	switch de.values.(type) {
+	switch de.Values.(type) {
 	case int:
-		val := de.values.(int)
+		val := de.Values.(int)
 		val += incr
-		de.values = val
+		de.Values = val
 
 		// send command
 		if flag == SAVE {
@@ -28,9 +28,9 @@ func (d *dict) incrBy(flag int, key string, incr int) (int, error) {
 	// TODO: for some reason after unmarshalling an int it turns into a float
 	case float64:
 		// convert to int
-		val := int(de.values.(float64))
+		val := int(de.Values.(float64))
 		val += incr
-		de.values = val
+		de.Values = val
 
 		return val, nil
 	default:
@@ -43,11 +43,11 @@ func (d *dict) set(flag int, key string, value any) error {
 	i := d.hash(key)
 
 	// if no set value before
-	if d.ht[Strings][i] == nil {
-		d.ht[Strings][i] = &dictEntry{
-			key:    key,
-			values: value,
-			next:   nil,
+	if d.Ht[Strings][i] == nil {
+		d.Ht[Strings][i] = &DictEntry{
+			Key:    key,
+			Values: value,
+			Next:   nil,
 		}
 
 		// send command
@@ -65,13 +65,13 @@ func (d *dict) set(flag int, key string, value any) error {
 
 	}
 
-	de := &dictEntry{
-		key:    key,
-		values: value,
-		next:   d.ht[Strings][i],
+	de := &DictEntry{
+		Key:    key,
+		Values: value,
+		Next:   d.Ht[Strings][i],
 	}
 
-	d.ht[Strings][i] = de
+	d.Ht[Strings][i] = de
 
 	// send command
 	if flag == SAVE {

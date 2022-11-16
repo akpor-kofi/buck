@@ -26,13 +26,13 @@ func (d *dict) LRange(key string, ub int, lb int) (arr []string, err error) {
 		return
 	}
 
-	lastPos := len(lde.values.([]string)) - 1
+	lastPos := len(lde.Values.([]string)) - 1
 	if lb > lastPos {
 		lb = lastPos
 	}
 
 	for i := ub; i <= lb; i++ {
-		arr = append(arr, lde.values.([]string)[i])
+		arr = append(arr, lde.Values.([]string)[i])
 	}
 
 	return
@@ -44,7 +44,7 @@ func (d *dict) LTop(key string) (top string, err error) {
 		return
 	}
 
-	top = lde.values.([]string)[len(lde.values.([]string))-1]
+	top = lde.Values.([]string)[len(lde.Values.([]string))-1]
 
 	return
 }
@@ -55,7 +55,7 @@ func (d *dict) LLen(key string) (length int, err error) {
 		return
 	}
 
-	length = len(lde.values.([]string))
+	length = len(lde.Values.([]string))
 
 	return
 }
@@ -69,16 +69,16 @@ func (d *dict) LRevRange(key string, opts ...int) (arr []string, err error) {
 	}
 
 	if count == 0 {
-		count = len(lde.values.([]string))
+		count = len(lde.Values.([]string))
 	}
 
-	lastPos := len(lde.values.([]string)) - 1
+	lastPos := len(lde.Values.([]string)) - 1
 
 	for i := lastPos; i >= 0; i-- {
 		if count == 0 {
 			break
 		}
-		arr = append(arr, lde.values.([]string)[i])
+		arr = append(arr, lde.Values.([]string)[i])
 		count--
 	}
 
@@ -91,10 +91,10 @@ func (d *dict) LPos(key, item string) (i int, err error) {
 		return
 	}
 
-	lastPos := len(lde.values.([]string)) - 1
+	lastPos := len(lde.Values.([]string)) - 1
 
 	for ; i <= lastPos; i++ {
-		if lde.values.([]string)[i] == item {
+		if lde.Values.([]string)[i] == item {
 			return
 		}
 	}
@@ -110,28 +110,28 @@ func (d *dict) LIndex(key string, index int) (string, error) {
 		return "", err
 	}
 
-	return lde.values.([]string)[index], nil
+	return lde.Values.([]string)[index], nil
 }
 
-func (d *dict) listLookup(key string) (*dictEntry, error) {
+func (d *dict) listLookup(key string) (*DictEntry, error) {
 	i := d.hash(key)
 
-	currentEntry := d.ht[List][i]
+	currentEntry := d.Ht[List][i]
 
 	if currentEntry == nil {
-		return &dictEntry{}, ErrSetNotFound
+		return &DictEntry{}, ErrSetNotFound
 	}
 
 	for {
-		if currentEntry.key == key {
+		if currentEntry.Key == key {
 			return currentEntry, nil
 		}
 
-		if currentEntry.next == nil {
-			return &dictEntry{}, ErrSetNotFound
+		if currentEntry.Next == nil {
+			return &DictEntry{}, ErrSetNotFound
 		}
 
-		currentEntry = currentEntry.next
+		currentEntry = currentEntry.Next
 	}
 
 }

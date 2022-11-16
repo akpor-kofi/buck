@@ -64,7 +64,7 @@ func (d *dict) FTCreate(indexKey string, opts IndexOptions) error {
 
 	idxTree := btree.NewG(2, lessFunc)
 
-	for _, v := range d.ht[Hashes] {
+	for _, v := range d.Ht[Hashes] {
 		if v == nil {
 			continue
 		}
@@ -74,11 +74,11 @@ func (d *dict) FTCreate(indexKey string, opts IndexOptions) error {
 		currentNode := v
 
 		for {
-			if !strings.HasPrefix(currentNode.key, opts.Prefix) {
-				currentNode = currentNode.next
+			if !strings.HasPrefix(currentNode.Key, opts.Prefix) {
+				currentNode = currentNode.Next
 			}
 
-			hash := currentNode.values.(map[string]any)
+			hash := currentNode.Values.(map[string]any)
 
 			lo.ForEach(opts.Schema, func(attr string, index int) {
 				if sentence, ok := hash[attr]; ok {
@@ -86,26 +86,26 @@ func (d *dict) FTCreate(indexKey string, opts IndexOptions) error {
 					//process the strings
 					wordlist := tokenize(sentence.(string))
 
-					idxTree = d.populateIndexTable(idxTree, wordlist, v.key, attr)
+					idxTree = d.populateIndexTable(idxTree, wordlist, v.Key, attr)
 				}
 			})
 
-			if currentNode.next == nil {
+			if currentNode.Next == nil {
 				break
 			}
 
-			currentNode = currentNode.next
+			currentNode = currentNode.Next
 
 		}
 	}
 
-	de := &dictEntry{
-		key:    indexKey,
-		values: idxTree,
-		next:   d.ht[Search][i],
+	de := &DictEntry{
+		Key:    indexKey,
+		Values: idxTree,
+		Next:   d.Ht[Search][i],
 	}
 
-	d.ht[Search][i] = de
+	d.Ht[Search][i] = de
 
 	return nil
 }
@@ -117,7 +117,7 @@ func (d *dict) FTSearch(indexKey, query string) (result []string, err error) {
 		return
 	}
 
-	tree := ide.values.(*btree.BTreeG[*invertedIndexEntry])
+	tree := ide.Values.(*btree.BTreeG[*invertedIndexEntry])
 
 	qEntry := &invertedIndexEntry{term: query}
 
@@ -146,24 +146,24 @@ func tokenize(doc string) (wordList []string) {
 	return
 }
 
-func (d *dict) indexKeyLookup(key string) (*dictEntry, error) {
+func (d *dict) indexKeyLookup(key string) (*DictEntry, error) {
 	i := d.hash(key)
-	currentEntry := d.ht[Search][i]
+	currentEntry := d.Ht[Search][i]
 
 	if currentEntry == nil {
-		return &dictEntry{}, ErrIndexNotFound
+		return &DictEntry{}, ErrIndexNotFound
 	}
 
 	for {
-		if currentEntry.key == key {
+		if currentEntry.Key == key {
 			return currentEntry, nil
 		}
 
-		if currentEntry.next == nil {
-			return &dictEntry{}, ErrIndexNotFound
+		if currentEntry.Next == nil {
+			return &DictEntry{}, ErrIndexNotFound
 		}
 
-		currentEntry = currentEntry.next
+		currentEntry = currentEntry.Next
 	}
 }
 

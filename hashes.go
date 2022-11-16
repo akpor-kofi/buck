@@ -76,30 +76,30 @@ func (d *dict) HGetAll(key string) *structable {
 	}
 
 	hashesStruct := &structable{
-		hashes: de.values.(map[string]any),
+		hashes: de.Values.(map[string]any),
 	}
 
 	return hashesStruct
 }
 
-func (d *dict) hashesLookup(key string) (*dictEntry, error) {
+func (d *dict) hashesLookup(key string) (*DictEntry, error) {
 	i := d.hash(key)
-	currentEntry := d.ht[Hashes][i]
+	currentEntry := d.Ht[Hashes][i]
 
 	if currentEntry == nil {
-		return &dictEntry{}, ErrHashNotFound
+		return &DictEntry{}, ErrHashNotFound
 	}
 
 	for {
-		if currentEntry.key == key {
+		if currentEntry.Key == key {
 			return currentEntry, nil
 		}
 
-		if currentEntry.next == nil {
-			return &dictEntry{}, ErrHashNotFound
+		if currentEntry.Next == nil {
+			return &DictEntry{}, ErrHashNotFound
 		}
 
-		currentEntry = currentEntry.next
+		currentEntry = currentEntry.Next
 	}
 }
 
@@ -110,7 +110,7 @@ func (d *dict) HGet(key, hashKey string) (any, error) {
 		return nil, err
 	}
 
-	return de.values.(map[string]any)[hashKey], nil
+	return de.Values.(map[string]any)[hashKey], nil
 }
 
 // HIncrBy TODO: implement this
@@ -120,7 +120,7 @@ func (d *dict) HIncrBy(key, hashKey string, incr int) (int, error) {
 		return 0, nil
 	}
 
-	value, ok := de.values.(map[string]any)[hashKey]
+	value, ok := de.Values.(map[string]any)[hashKey]
 
 	if !ok {
 		return 0, fmt.Errorf("attribute does not exists")
@@ -130,7 +130,7 @@ func (d *dict) HIncrBy(key, hashKey string, incr int) (int, error) {
 	case int, int64:
 		a := int(value.(int64))
 		a += incr
-		de.values.(map[string]any)[hashKey] = a
+		de.Values.(map[string]any)[hashKey] = a
 		return a, nil
 	}
 

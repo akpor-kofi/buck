@@ -13,11 +13,11 @@ func (d *dict) hset(flag int, key string, hashes ...any) error {
 		j += 2
 	}
 
-	if d.ht[Hashes][i] == nil {
-		d.ht[Hashes][i] = &dictEntry{
-			key:    key,
-			values: hashMap,
-			next:   nil,
+	if d.Ht[Hashes][i] == nil {
+		d.Ht[Hashes][i] = &DictEntry{
+			Key:    key,
+			Values: hashMap,
+			Next:   nil,
 		}
 
 		if flag == SAVE {
@@ -34,13 +34,13 @@ func (d *dict) hset(flag int, key string, hashes ...any) error {
 		return nil
 	}
 
-	de := &dictEntry{
-		key:    key,
-		values: hashMap,
-		next:   d.ht[Hashes][i],
+	de := &DictEntry{
+		Key:    key,
+		Values: hashMap,
+		Next:   d.Ht[Hashes][i],
 	}
 
-	d.ht[Hashes][i] = de
+	d.Ht[Hashes][i] = de
 
 	if flag == SAVE {
 

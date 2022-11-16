@@ -5,6 +5,7 @@ import (
 	"log"
 	"os"
 	"sync"
+	"time"
 )
 
 const (
@@ -20,22 +21,30 @@ const (
 	// Graph
 )
 
-type dictEntry struct {
-	key    string
-	values any // possible types are string, int, hash(map[string]any)
-	next   *dictEntry
+type DictEntry struct {
+	Key    string
+	Values any // possible types are string, int, hash(map[string]any)
+	Next   *DictEntry
+}
+
+type Config struct {
+	IntervalToSave time.Duration
+	PathToAOF      string
+	PathToDump     string
+	AppendOnly     bool
 }
 
 type dict struct {
-	ht               [9][100]*dictEntry
+	Ht               [9][1000]*DictEntry
 	hexastore        []string
 	commandLoadQueue chan command
 	commandChan      chan command
 	waiter           *sync.WaitGroup
 	aof              *os.File
+	config           *Config
 }
 
-func newDict() *dict {
+func newDict(config *Config) *dict {
 	// open or create append-only file
 	aof, err := os.OpenFile("./buckis.aof", os.O_RDWR|os.O_CREATE, 0666)
 
@@ -44,11 +53,12 @@ func newDict() *dict {
 	}
 
 	return &dict{
-		ht:               [9][100]*dictEntry{},
+		Ht:               [9][1000]*DictEntry{},
 		commandLoadQueue: make(chan command, 10),
 		commandChan:      make(chan command),
 		waiter:           &sync.WaitGroup{},
 		aof:              aof,
+		config:           config,
 	}
 }
 
@@ -57,5 +67,5 @@ func (d *dict) hash(key string) uint32 {
 
 	h := murmur.MurmurHash2(b, 0)
 
-	return h % uint32(len(d.ht))
+	return h % uint32(len(d.Ht))
 }

@@ -12,13 +12,13 @@ func (d *dict) bfAdd(flag int, key, value string) error {
 			bitArray[bloomHashFunc(value, k)] = true
 		}
 
-		de := &dictEntry{
-			key:    key,
-			values: bitArray,
-			next:   d.ht[Bloom][idx],
+		de := &DictEntry{
+			Key:    key,
+			Values: bitArray,
+			Next:   d.Ht[Bloom][idx],
 		}
 
-		d.ht[Bloom][idx] = de
+		d.Ht[Bloom][idx] = de
 
 		if flag == SAVE {
 			d.waiter.Add(1)
@@ -33,13 +33,13 @@ func (d *dict) bfAdd(flag int, key, value string) error {
 		return nil
 	}
 
-	bitArray := bfde.values.([100]bool)
+	bitArray := bfde.Values.([100]bool)
 
 	for k := 1; k <= numberOfHashFuncs; k++ {
 		bitArray[bloomHashFunc(value, k)] = true
 	}
 
-	bfde.values = bitArray
+	bfde.Values = bitArray
 
 	if flag == SAVE {
 		d.waiter.Add(1)

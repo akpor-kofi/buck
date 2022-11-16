@@ -6,8 +6,8 @@ type Db struct {
 	// maybe a place for indexes not sure yet
 }
 
-func DB() *Db {
-	d := newDict()
+func DB(config *Config) *Db {
+	d := newDict(config)
 
 	go d.listenForCommands()
 

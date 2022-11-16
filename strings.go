@@ -18,31 +18,31 @@ func (d *dict) Get(key string) (any, error) {
 		return "", err
 	}
 
-	return de.values, nil
+	return de.Values, nil
 }
 
 func (d *dict) IncrBy(key string, incr int) (int, error) {
 	return d.incrBy(SAVE, key, incr)
 }
 
-func (d *dict) stringsLookup(key string) (*dictEntry, error) {
+func (d *dict) stringsLookup(key string) (*DictEntry, error) {
 	i := d.hash(key)
 
-	currentEntry := d.ht[Strings][i]
+	currentEntry := d.Ht[Strings][i]
 
 	if currentEntry == nil {
-		return &dictEntry{}, ErrEntryNotFound
+		return &DictEntry{}, ErrEntryNotFound
 	}
 
 	for {
-		if currentEntry.key == key {
+		if currentEntry.Key == key {
 			return currentEntry, nil
 		}
 
-		if currentEntry.next == nil {
-			return &dictEntry{}, ErrEntryNotFound
+		if currentEntry.Next == nil {
+			return &DictEntry{}, ErrEntryNotFound
 		}
 
-		currentEntry = currentEntry.next
+		currentEntry = currentEntry.Next
 	}
 }

@@ -15,14 +15,14 @@ func (d *dict) jsonSet(flag int, key, path string, value any) (err error) {
 	i := d.hash(key)
 
 	if err != nil {
-		de := &dictEntry{
-			key:  key,
-			next: d.ht[Json][i],
+		de := &DictEntry{
+			Key:  key,
+			Next: d.Ht[Json][i],
 		}
 
 		switch value.(type) {
 		case map[string]any:
-			de.values = value
+			de.Values = value
 		case string:
 			// try to unmarshal object string
 			s := value.(string)
@@ -32,10 +32,10 @@ func (d *dict) jsonSet(flag int, key, path string, value any) (err error) {
 				return
 			}
 			fmt.Println(o)
-			de.values = o
+			de.Values = o
 		}
 
-		d.ht[Json][i] = de
+		d.Ht[Json][i] = de
 
 		if flag == SAVE {
 			d.waiter.Add(1)
@@ -59,12 +59,12 @@ func (d *dict) jsonSet(flag int, key, path string, value any) (err error) {
 			if err != nil {
 				return
 			}
-			jde.values = o
+			jde.Values = o
 			return
 		}
 
 	} else {
-		jsonObj := jde.values.(map[string]any)
+		jsonObj := jde.Values.(map[string]any)
 
 		jsonSetInPath(jsonObj, path, value)
 	}
@@ -137,7 +137,7 @@ func (d *dict) JSONGet(key string, path string) *jsonMap {
 
 	a := &jsonMap{}
 
-	value := jsonGetFromPath(jde.values.(map[string]any), path)
+	value := jsonGetFromPath(jde.Values.(map[string]any), path)
 
 	if value == nil {
 		a.err = fmt.Errorf("no path found")
@@ -164,7 +164,7 @@ func (d *dict) JSONNumIncrBy(key string, path string, incr int) (err error) {
 		return
 	}
 
-	jsonObj := jde.values.(map[string]any)
+	jsonObj := jde.Values.(map[string]any)
 
 	pathValue := jsonGetFromPath(jsonObj, path)
 
@@ -195,7 +195,7 @@ func (d *dict) JSONToggle(key string, path string) (err error) {
 		return
 	}
 
-	jsonObj := jde.values.(map[string]any)
+	jsonObj := jde.Values.(map[string]any)
 
 	pathValue := jsonGetFromPath(jsonObj, path)
 
@@ -224,7 +224,7 @@ func (d *dict) JSONArrAppend(key, path string, element ...string) (err error) {
 		return
 	}
 
-	jsonObj := jde.values.(map[string]any)
+	jsonObj := jde.Values.(map[string]any)
 
 	pathValue := jsonGetFromPath(jsonObj, path)
 
@@ -238,25 +238,25 @@ func (d *dict) JSONArrAppend(key, path string, element ...string) (err error) {
 	return
 }
 
-func (d *dict) jsonLookup(key string) (*dictEntry, error) {
+func (d *dict) jsonLookup(key string) (*DictEntry, error) {
 	i := d.hash(key)
 
-	currentEntry := d.ht[Json][i]
+	currentEntry := d.Ht[Json][i]
 
 	if currentEntry == nil {
-		return &dictEntry{}, ErrSetNotFound
+		return &DictEntry{}, ErrSetNotFound
 	}
 
 	for {
-		if currentEntry.key == key {
+		if currentEntry.Key == key {
 			return currentEntry, nil
 		}
 
-		if currentEntry.next == nil {
-			return &dictEntry{}, ErrSetNotFound
+		if currentEntry.Next == nil {
+			return &DictEntry{}, ErrSetNotFound
 		}
 
-		currentEntry = currentEntry.next
+		currentEntry = currentEntry.Next
 	}
 }
 

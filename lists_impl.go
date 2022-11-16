@@ -8,19 +8,19 @@ func (d *dict) rPush(flag int, key, item string) (index int, err error) {
 	if err != nil {
 		// make a list for it and add it to
 
-		de := &dictEntry{
-			key:    key,
-			values: []string{item},
+		de := &DictEntry{
+			Key:    key,
+			Values: []string{item},
 		}
 
 		i := d.hash(key)
-		if d.ht[List][i] == nil {
-			de.next = nil
+		if d.Ht[List][i] == nil {
+			de.Next = nil
 		} else {
-			de.next = d.ht[List][i]
+			de.Next = d.Ht[List][i]
 		}
 
-		d.ht[List][i] = de
+		d.Ht[List][i] = de
 
 		if flag == SAVE {
 			d.waiter.Add(1)
@@ -36,10 +36,10 @@ func (d *dict) rPush(flag int, key, item string) (index int, err error) {
 	}
 
 	// queue implementation
-	list := lde.values.([]string)
+	list := lde.Values.([]string)
 	list = append(list, item)
 
-	lde.values = list
+	lde.Values = list
 
 	// set index
 	index = len(list) - 1
@@ -64,10 +64,10 @@ func (d *dict) lPush(flag int, key, item string) (index int, err error) {
 	}
 
 	// can only push if there space that is rear is greater than 0
-	list := lde.values.([]string)
+	list := lde.Values.([]string)
 
 	list = append([]string{item}, list...)
-	lde.values = list
+	lde.Values = list
 
 	if flag == SAVE {
 		d.waiter.Add(1)
@@ -92,9 +92,9 @@ func (d *dict) lPop(flag int, key string) (index int, err error) {
 	}
 
 	// queue implementation
-	list := lde.values.([]string)
+	list := lde.Values.([]string)
 
-	lde.values = list[1:]
+	lde.Values = list[1:]
 
 	if flag == SAVE {
 		d.waiter.Add(1)
@@ -118,9 +118,9 @@ func (d *dict) rPop(flag int, key string) (index int, err error) {
 		return
 	}
 
-	list := lde.values.([]string)
+	list := lde.Values.([]string)
 	index = len(list) - 2
-	lde.values = list[:index]
+	lde.Values = list[:index]
 
 	if flag == SAVE {
 		d.waiter.Add(1)

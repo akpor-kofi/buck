@@ -52,7 +52,7 @@ func (d *dict) ZScore(key string, member string) int {
 		return 0
 	}
 
-	zd := ssde.values.(*zdict)
+	zd := ssde.Values.(*zdict)
 
 	currentZEntry := zd.zht[d.zhash(member)]
 
@@ -78,7 +78,7 @@ func (d *dict) ZRange(key string, lb, ub int) (members []string, err error) {
 		return
 	}
 
-	zd := ssde.values.(*zdict)
+	zd := ssde.Values.(*zdict)
 	firstElementIndex := 0
 	numIterations := lb - firstElementIndex
 	lowerBound := zd.skiplist.Front()
@@ -117,7 +117,7 @@ func (d *dict) ZRangeByScore(key string, lb, ub int) (members []string, err erro
 		return
 	}
 
-	zd := ssde.values.(*zdict)
+	zd := ssde.Values.(*zdict)
 
 	for i := lb; i < ub; i++ {
 		if val, ok := zd.skiplist.GetValue(i); !ok {
@@ -146,7 +146,7 @@ func (d *dict) ZRangeByLex(key string, score int, lb, ub string) (results []stri
 		return
 	}
 
-	zd := ssde.values.(*zdict)
+	zd := ssde.Values.(*zdict)
 	val, exists := zd.skiplist.GetValue(score)
 
 	if !exists {
@@ -180,7 +180,7 @@ func (d *dict) ZRank(key string, member string) int {
 	// 1) get member score from hashtable
 	score := d.ZScore(key, member)
 	// 2) get score rank from hashtable
-	zd := ssde.values.(*zdict)
+	zd := ssde.Values.(*zdict)
 
 	rank, err := zd.getRank(score)
 	if err != nil {
@@ -228,25 +228,25 @@ func (d *dict) zhash(member string) int {
 	return int(h % 50)
 }
 
-func (d *dict) sortedSetLookup(key string) (*dictEntry, error) {
+func (d *dict) sortedSetLookup(key string) (*DictEntry, error) {
 	i := d.hash(key)
 
-	currentEntry := d.ht[SortedSet][i]
+	currentEntry := d.Ht[SortedSet][i]
 
 	if currentEntry == nil {
-		return &dictEntry{}, ErrSortedSetNotFound
+		return &DictEntry{}, ErrSortedSetNotFound
 	}
 
 	for {
-		if currentEntry.key == key {
+		if currentEntry.Key == key {
 			return currentEntry, nil
 		}
 
-		if currentEntry.next == nil {
-			return &dictEntry{}, ErrSortedSetNotFound
+		if currentEntry.Next == nil {
+			return &DictEntry{}, ErrSortedSetNotFound
 		}
 
-		currentEntry = currentEntry.next
+		currentEntry = currentEntry.Next
 	}
 }
 
