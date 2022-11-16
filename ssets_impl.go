@@ -79,10 +79,13 @@ func (d *dict) zadd(flag int, key string, member string, score int) error {
 
 func (d *dict) zincrby(flag int, key, member string, incr int) error {
 	// 1) get the current score of the member
-	previousScore := d.ZScore(key, member)
+	previousScore, err := d.ZScore(key, member)
+	if err != nil {
+		return err
+	}
 
 	// 2) delete the previous member entry
-	err := d.ZRem(key, member)
+	err = d.ZRem(key, member)
 	if err != nil {
 		return err
 	}
