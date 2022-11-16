@@ -56,6 +56,10 @@ func (d *dict) ZScore(key string, member string) int {
 
 	currentZEntry := zd.zht[d.zhash(member)]
 
+	if currentZEntry == nil {
+		return 0 //meaning could not find member
+	}
+
 	for {
 		if currentZEntry.member == member {
 			return currentZEntry.score
