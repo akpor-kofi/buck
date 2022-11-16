@@ -62,7 +62,7 @@ func SaveDataset(d *Db) error {
 	// 4) flush append log buckis.aof
 	err = os.Remove("buckis.aof")
 	if err != nil {
-		panic(err)
+		return err
 	}
 
 	return err

@@ -4,7 +4,7 @@ func (d *dict) sadd(flag int, key, value string) error {
 	de, err := d.setLookup(key)
 
 	if err == nil {
-		de.Values.(map[string]void)[value] = void{}
+		de.Values.(map[string]Void)[value] = Void{}
 
 		if flag == SAVE {
 
@@ -24,7 +24,7 @@ func (d *dict) sadd(flag int, key, value string) error {
 
 	de = &DictEntry{
 		Key: key,
-		Values: map[string]void{
+		Values: map[string]Void{
 			value: {},
 		},
 	}
@@ -57,7 +57,7 @@ func (d *dict) srem(flag int, key, value string) error {
 		return err
 	}
 
-	delete(de.Values.(map[string]void), value)
+	delete(de.Values.(map[string]Void), value)
 
 	if flag == SAVE {
 
@@ -79,7 +79,7 @@ func (d *dict) smove(flag int, sk, dk, value string) error {
 		return err
 	}
 
-	delete(sde.Values.(map[string]void), value)
+	delete(sde.Values.(map[string]Void), value)
 
 	// add the value to the set
 	dde, err := d.setLookup(dk)
@@ -87,7 +87,7 @@ func (d *dict) smove(flag int, sk, dk, value string) error {
 		return err
 	}
 
-	dde.Values.(map[string]void)[value] = void{}
+	dde.Values.(map[string]Void)[value] = Void{}
 
 	if flag == SAVE {
 
