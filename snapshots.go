@@ -75,6 +75,9 @@ func GetSnapshot(d *Db) error {
 	}
 
 	// assuming recent snapshot is last in the directory
+	if len(dirs) == 0 {
+		return fmt.Errorf("no current dump")
+	}
 	lastRecentDump := dirs[len(dirs)-1]
 	name := lastRecentDump.Name()
 	fmt.Println(name)
@@ -92,12 +95,6 @@ func GetSnapshot(d *Db) error {
 	//}
 
 	err = unmarshal(file, &d.Ht)
-	if err != nil {
-		panic(err)
-	}
-
-	// 1) delete buckis.aof
-	err = os.Remove("buckis.aof")
 	if err != nil {
 		panic(err)
 	}
