@@ -18,9 +18,9 @@ type ZEntry struct {
 	next   *ZEntry
 }
 
-type zdict struct {
-	skiplist *skiplist.SkipList
-	zht      [50]*ZEntry
+type Zdict struct {
+	Skiplist *skiplist.SkipList
+	Zht      [50]*ZEntry
 }
 
 type Z struct {
@@ -28,12 +28,12 @@ type Z struct {
 	score  int
 }
 
-func newZdict() *zdict {
+func newZdict() *Zdict {
 	sl := skiplist.New(skiplist.Int)
 
-	return &zdict{
-		skiplist: sl,
-		zht:      [50]*ZEntry{},
+	return &Zdict{
+		Skiplist: sl,
+		Zht:      [50]*ZEntry{},
 	}
 }
 
@@ -52,9 +52,9 @@ func (d *dict) ZScore(key string, member string) (int, error) {
 		return 0, ErrSetNotFound
 	}
 
-	zd := ssde.Values.(*zdict)
+	zd := ssde.Values.(*Zdict)
 
-	currentZEntry := zd.zht[d.zhash(member)]
+	currentZEntry := zd.Zht[d.zhash(member)]
 
 	if currentZEntry == nil {
 		return 0, ErrSetNotFound //meaning could not find member
@@ -82,10 +82,10 @@ func (d *dict) ZRange(key string, lb, ub int) (members []string, err error) {
 		return
 	}
 
-	zd := ssde.Values.(*zdict)
+	zd := ssde.Values.(*Zdict)
 	firstElementIndex := 0
 	numIterations := lb - firstElementIndex
-	lowerBound := zd.skiplist.Front()
+	lowerBound := zd.Skiplist.Front()
 
 	// Fix bug: if you put a very large number it returns the last element
 	for i := 0; i < numIterations; i++ {
@@ -121,10 +121,10 @@ func (d *dict) ZRangeByScore(key string, lb, ub int) (members []string, err erro
 		return
 	}
 
-	zd := ssde.Values.(*zdict)
+	zd := ssde.Values.(*Zdict)
 
 	for i := lb; i < ub; i++ {
-		if val, ok := zd.skiplist.GetValue(i); !ok {
+		if val, ok := zd.Skiplist.GetValue(i); !ok {
 			continue
 		} else {
 			list := val.(*lexTree)
@@ -150,8 +150,8 @@ func (d *dict) ZRangeByLex(key string, score int, lb, ub string) (results []stri
 		return
 	}
 
-	zd := ssde.Values.(*zdict)
-	val, exists := zd.skiplist.GetValue(score)
+	zd := ssde.Values.(*Zdict)
+	val, exists := zd.Skiplist.GetValue(score)
 
 	if !exists {
 		return
@@ -187,7 +187,7 @@ func (d *dict) ZRank(key string, member string) (int, error) {
 		return 0, ErrSetNotFound
 	}
 	// 2) get score rank from hashtable
-	zd := ssde.Values.(*zdict)
+	zd := ssde.Values.(*Zdict)
 
 	rank, err := zd.getRank(score)
 	if err != nil {
@@ -207,10 +207,10 @@ func (d *dict) ZRandMember(key string) (member string, err error) {
 	return "", nil
 }
 
-func (zd *zdict) getRank(score int) (int, error) {
+func (zd *Zdict) getRank(score int) (int, error) {
 	count := 0
 
-	zEl := zd.skiplist.Front()
+	zEl := zd.Skiplist.Front()
 
 	for {
 		if zEl.Key() == score {

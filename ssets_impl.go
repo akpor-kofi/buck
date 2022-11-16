@@ -11,15 +11,15 @@ func (d *dict) zadd(flag int, key string, member string, score int) error {
 		// insert z into hash table
 		zd := newZdict()
 
-		if zd.zht[ssetHash] == nil {
-			zd.zht[ssetHash] = &ZEntry{z.score, z.member, nil}
+		if zd.Zht[ssetHash] == nil {
+			zd.Zht[ssetHash] = &ZEntry{z.score, z.member, nil}
 		} else {
-			zd.zht[ssetHash] = &ZEntry{z.score, z.member, zd.zht[ssetHash]}
+			zd.Zht[ssetHash] = &ZEntry{z.score, z.member, zd.Zht[ssetHash]}
 		}
 
 		// link score to member on skip list
 		tree := lexTree{}
-		zd.skiplist.Set(z.score, tree.Add(z.member))
+		zd.Skiplist.Set(z.score, tree.Add(z.member))
 
 		de := &DictEntry{
 			Key:    key,
@@ -42,26 +42,26 @@ func (d *dict) zadd(flag int, key string, member string, score int) error {
 		return nil
 	}
 
-	zd := ssde.Values.(*zdict)
+	zd := ssde.Values.(*Zdict)
 
 	i := d.zhash(z.member)
 
-	if zd.zht[i] == nil {
-		zd.zht[i] = &ZEntry{z.score, z.member, nil}
+	if zd.Zht[i] == nil {
+		zd.Zht[i] = &ZEntry{z.score, z.member, nil}
 	} else {
-		zd.zht[i] = &ZEntry{z.score, z.member, zd.zht[i]}
+		zd.Zht[i] = &ZEntry{z.score, z.member, zd.Zht[i]}
 	}
 
 	// first check if score is already in
-	if val, exists := zd.skiplist.GetValue(z.score); exists {
-		//TODO: sort the linked list some how maybe using skiplist
-		zd.skiplist.Set(z.score, val.(*lexTree).Add(z.member))
+	if val, exists := zd.Skiplist.GetValue(z.score); exists {
+		//TODO: sort the linked list some how maybe using Skiplist
+		zd.Skiplist.Set(z.score, val.(*lexTree).Add(z.member))
 	} else {
 
 		// create a new lex tree
 
 		lt := &lexTree{}
-		zd.skiplist.Set(z.score, lt.Add(z.member))
+		zd.Skiplist.Set(z.score, lt.Add(z.member))
 	}
 
 	if flag == SAVE {
@@ -118,23 +118,23 @@ func (d *dict) zrem(flag int, key string, member string) error {
 		return err
 	}
 
-	zd := ssde.Values.(*zdict)
+	zd := ssde.Values.(*Zdict)
 
 	// delete member from hashtable
 	i := d.zhash(member)
 
-	// delete member from skiplist
-	if zd.zht[d.zhash(member)] == nil {
+	// delete member from Skiplist
+	if zd.Zht[d.zhash(member)] == nil {
 		return ErrEntryNotFound
 	}
 
-	score, err := findMembersScore(zd.zht[d.zhash(member)], member)
+	score, err := findMembersScore(zd.Zht[d.zhash(member)], member)
 
 	if err != nil {
 		return err
 	}
 
-	el := zd.skiplist.Get(score)
+	el := zd.Skiplist.Get(score)
 
 	switch {
 	case el != nil:
@@ -142,14 +142,14 @@ func (d *dict) zrem(flag int, key string, member string) error {
 		tree, err = tree.remove(member)
 
 		if err == FlagRemoveElement {
-			zd.skiplist.RemoveElement(el)
+			zd.Skiplist.RemoveElement(el)
 		} else {
-			zd.skiplist.Set(score, tree)
+			zd.Skiplist.Set(score, tree)
 		}
 	}
 
 	// traverse linked list
-	currentNode := zd.zht[i]
+	currentNode := zd.Zht[i]
 	var tempPrevNode *ZEntry
 
 	if currentNode == nil {
@@ -160,7 +160,7 @@ func (d *dict) zrem(flag int, key string, member string) error {
 		if currentNode.member == member {
 			// delete node
 			if tempPrevNode == nil {
-				zd.zht[i] = nil
+				zd.Zht[i] = nil
 			} else {
 				tempPrevNode.next = currentNode.next
 			}
@@ -176,7 +176,7 @@ func (d *dict) zrem(flag int, key string, member string) error {
 		currentNode = currentNode.next
 	}
 
-	//elm := zd.skiplist.Get(105)
+	//elm := zd.Skiplist.Get(105)
 	//fmt.Println(elm.Value.(*ZNode).member)
 	if flag == SAVE {
 		d.waiter.Add(1)
