@@ -45,11 +45,11 @@ func (d *dict) ZAdd(key string, member string, score int) error {
 	return d.zadd(SAVE, key, member, score)
 }
 
-func (d *dict) ZScore(key string, member string) int {
+func (d *dict) ZScore(key string, member string) (int, error) {
 	ssde, err := d.sortedSetLookup(key)
 
-	if err == ErrSortedSetNotFound {
-		return 0
+	if err != nil {
+		return 0, ErrSetNotFound
 	}
 
 	zd := ssde.Values.(*zdict)
@@ -57,16 +57,16 @@ func (d *dict) ZScore(key string, member string) int {
 	currentZEntry := zd.zht[d.zhash(member)]
 
 	if currentZEntry == nil {
-		return 0 //meaning could not find member
+		return 0, ErrSetNotFound //meaning could not find member
 	}
 
 	for {
 		if currentZEntry.member == member {
-			return currentZEntry.score
+			return currentZEntry.score, nil
 		}
 
 		if currentZEntry.next == nil {
-			return 0 //meaning could not find member
+			return 0, ErrSetNotFound //meaning could not find member
 		}
 
 		currentZEntry = currentZEntry.next
@@ -173,25 +173,28 @@ func (d *dict) ZUnion(dk, sk string) (members []string, err error) {
 	return nil, nil
 }
 
-func (d *dict) ZRank(key string, member string) int {
+func (d *dict) ZRank(key string, member string) (int, error) {
 	ssde, err := d.sortedSetLookup(key)
 
 	if err == ErrSortedSetNotFound {
-		return 0
+		return 0, ErrSetNotFound
 	}
 
 	// Algorithm
 	// 1) get member score from hashtable
-	score := d.ZScore(key, member)
+	score, err := d.ZScore(key, member)
+	if err != nil {
+		return 0, ErrSetNotFound
+	}
 	// 2) get score rank from hashtable
 	zd := ssde.Values.(*zdict)
 
 	rank, err := zd.getRank(score)
 	if err != nil {
-		return 0
+		return 0, ErrSetNotFound
 	}
 
-	return rank
+	return rank, nil
 }
 
 func (d *dict) ZRem(key string, member string) error {
